@@ -24,8 +24,8 @@ static const char* str_findchr (const char* start, const char* end, int c)
 
 	assert (start <= end);
 	assert (0 <= c && c <= 127);	//CHAR_MAX
-	
 	//memchr implementation will only work when searching for ascii characters within a utf8 string
+	
 	it= (const char*) memchr (start, c, end - start);
 	return (it != NULL) ? it : end;
 }
@@ -57,7 +57,7 @@ static const char* str_findstr (const char* start, const char* end, const char* 
 
 static BOOL str_startswith (const char* start, const char* end, const char* prefix)
 {
-	size_t nbytes;
+	ptrdiff_t nbytes;
 	assert (start <= end);
 	
 	nbytes= strlen (prefix);
@@ -69,7 +69,7 @@ static BOOL str_startswith (const char* start, const char* end, const char* pref
 
 static BOOL str_endswith (const char* start, const char* end, const char* suffix)
 {
-	size_t nbytes;
+	ptrdiff_t nbytes;
 	assert (start <= end);
 	
 	nbytes= strlen (suffix);
@@ -90,6 +90,7 @@ static const char* str_lspace (const char* start, const char* end)
 	return it;
 }
 
+//left trim whitespace
 static const char* str_ltrim (const char* start, const char* end)
 {
 	const char* it;
@@ -101,6 +102,7 @@ static const char* str_ltrim (const char* start, const char* end)
 	return it;
 }
 
+//right trim whitespace
 static const char* str_rtrim (const char* start, const char* end)
 {
 	const char* it, *prev;
@@ -121,22 +123,17 @@ static const char* str_rtrim (const char* start, const char* end)
 typedef struct
 {
 	const char* xml;
-	int xmllen;
+	UINT xmllen;
 	sxmltok_t* tokens;
 	UINT num_tokens;
-} sxml_input_t;
+} sxml_args_t;
 
-#define input_getstart(in,state)	((in)->xml + (state)->bufferpos)
-#define input_getend(in) ((in)->xml + (in)->xmllen)
+#define args_getpos(args,state)	((args)->xml + (state)->bufferpos)
+#define args_getend(args) ((args)->xml + (in)->xmllen)
 
-static sxmltok_t* input_lasttoken (const sxml_input_t* in, const sxml_parser* state)
-{
-	sxmltok_t *tokens= in->tokens;
-	return (0 < state->ntokens) ? tokens + (state->ntokens - 1) : NULL;
-}
+//---
 
-
-static BOOL state_pushtoken (sxml_parser* state, sxml_input_t* in, sxmltype_t type, const char* start, const char* end)
+static BOOL state_pushtoken (sxml_parser* state, sxml_args_t* in, sxmltype_t type, const char* start, const char* end)
 {
 	sxmltok_t* token;
 	UINT i= state->ntokens++;
@@ -165,7 +162,7 @@ static BOOL state_pushtoken (sxml_parser* state, sxml_input_t* in, sxmltype_t ty
 	return TRUE;
 }
 
-static sxmlerr_t state_commit (sxml_parser* state, const sxml_input_t* in, const char* pos)
+static sxmlerr_t state_commit (sxml_parser* state, const sxml_args_t* in, const char* pos)
 {
 	if (in->num_tokens < state->ntokens)
 		return SXML_ERROR_TOKENSFULL;
@@ -174,15 +171,22 @@ static sxmlerr_t state_commit (sxml_parser* state, const sxml_input_t* in, const
 	return SXML_SUCCESS;
 }
 
+static sxmltok_t* state_lasttoken (const sxml_parser* state, const sxml_args_t* in)
+{
+	sxmltok_t *tokens= in->tokens;
+	return (0 < state->ntokens) ? tokens + (state->ntokens - 1) : NULL;
+}
+
+
 //MARK: parse
 
 #define TAG_LEN(str)	(sizeof (str) - 1)
 #define TAG_MINSIZE	3
 
-static sxmlerr_t parse_attributes (sxml_parser* state, sxml_input_t* in, const char* start, const char* end)
+static sxmlerr_t parse_attributes (sxml_parser* state, sxml_args_t* in, const char* start, const char* end)
 {
 	const char* name;
-	sxmltok_t* token= input_lasttoken (in, state);
+	sxmltok_t* token= state_lasttoken (state, in);
 	assert (token != NULL);
 
 	name= str_ltrim (start, end);
@@ -217,14 +221,14 @@ static sxmlerr_t parse_attributes (sxml_parser* state, sxml_input_t* in, const c
 	return SXML_SUCCESS;
 }
 
-static sxmlerr_t parse_comment (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_comment (sxml_parser* state, sxml_args_t* in)
 {
 	static const char STARTTAG[]= "<!--";
 	static const char ENDTAG[]= "-->";
 
 	const char* dash;
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 	if (end - start < TAG_LEN (STARTTAG))
 		return SXML_ERROR_BUFFERDRY;
 
@@ -240,14 +244,14 @@ static sxmlerr_t parse_comment (sxml_parser* state, sxml_input_t* in)
 	return state_commit (state, in, dash + TAG_LEN (ENDTAG));
 }
 
-static sxmlerr_t parse_instruction (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_instruction (sxml_parser* state, sxml_args_t* in)
 {
 	static const char STARTTAG[]= "<?";
 	static const char ENDTAG[]= "?>";
 
 	const char* quest;
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 	assert (TAG_MINSIZE <= end - start);
 
 	if (!str_startswith (start, end, STARTTAG))
@@ -263,14 +267,14 @@ static sxmlerr_t parse_instruction (sxml_parser* state, sxml_input_t* in)
 	return state_commit (state, in, quest + TAG_LEN (ENDTAG));
 }
 
-static sxmlerr_t parse_doctype (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_doctype (sxml_parser* state, sxml_args_t* in)
 {
 	static const char STARTTAG[]= "<!DOCTYPE";
 	static const char ENDTAG[]= "]>";
 
 	const char* bracket;
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 	if (end - start < TAG_LEN (STARTTAG))
 		return SXML_ERROR_BUFFERDRY;
 
@@ -286,13 +290,13 @@ static sxmlerr_t parse_doctype (sxml_parser* state, sxml_input_t* in)
 	return state_commit (state, in, bracket + TAG_LEN (ENDTAG));
 }
 
-static sxmlerr_t parse_start (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_start (sxml_parser* state, sxml_args_t* in)
 {	
 	BOOL empty;
 	sxmlerr_t err;
 	const char* gt, *name, *space;
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 	assert (TAG_MINSIZE <= end - start);
 
 	if (!(start[0] == '<' && ISALPHA (start[1])))
@@ -325,11 +329,11 @@ static sxmlerr_t parse_start (sxml_parser* state, sxml_input_t* in)
 	return state_commit (state, in, gt + 1);
 }
 
-static sxmlerr_t parse_end (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_end (sxml_parser* state, sxml_args_t* in)
 {
 	const char* gt, *space;
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 	assert (TAG_MINSIZE <= end - start);
 
 	if (!(str_startswith (start, end, "</") && ISALPHA (start[2])))
@@ -349,14 +353,14 @@ static sxmlerr_t parse_end (sxml_parser* state, sxml_input_t* in)
 	return state_commit (state, in, gt + 1);
 }
 
-static sxmlerr_t parse_cdata (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_cdata (sxml_parser* state, sxml_args_t* in)
 {
 	static const char STARTTAG[]= "<![CDATA[";
 	static const char ENDTAG[]= "]]>";
 
 	const char* bracket;
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 	if (end - start < TAG_LEN (STARTTAG))
 		return SXML_ERROR_BUFFERDRY;
 
@@ -372,10 +376,10 @@ static sxmlerr_t parse_cdata (sxml_parser* state, sxml_input_t* in)
 	return state_commit (state, in, bracket + TAG_LEN (ENDTAG));
 }
 
-static sxmlerr_t parse_characters (sxml_parser* state, sxml_input_t* in)
+static sxmlerr_t parse_characters (sxml_parser* state, sxml_args_t* in)
 {
-	const char* start= input_getstart (in, state);
-	const char* end= input_getend (in);
+	const char* start= args_getpos (in, state);
+	const char* end= args_getend (in);
 
 	const char* lt= str_findchr (start, end, '<');
 	if (lt == end)
@@ -398,15 +402,15 @@ void sxml_init (sxml_parser *parser)
 	parser->taglevel= 0;
 }
 
-#define state_hasroot(state)	(0 < (state)->taglevel)
-#define state_rootcompleted(state)	((state)->taglevel == 0)
+#define ROOT_FOUND(state)	(0 < (state)->taglevel)
+#define ROOT_PARSED(state)	((state)->taglevel == 0)
 
-sxmlerr_t sxml_parse(sxml_parser *parser, const char *xml, unsigned xmllen, sxmltok_t tokens[], unsigned num_tokens)
+sxmlerr_t sxml_parse(sxml_parser *parser, const char *xml, UINT xmllen, sxmltok_t tokens[], UINT num_tokens)
 {
 	sxml_parser temp= *parser;
 	const char* end= xml + xmllen;
 	
-	sxml_input_t in;
+	sxml_args_t in;
 	in.xml= xml;
 	in.xmllen= xmllen;
 	in.tokens= tokens;
@@ -414,10 +418,10 @@ sxmlerr_t sxml_parse(sxml_parser *parser, const char *xml, unsigned xmllen, sxml
 
 	//---
 
-	while (!state_hasroot (&temp))
+	while (!ROOT_FOUND (&temp))
 	{
 		sxmlerr_t err;
-		const char* start= input_getstart (&in, &temp);
+		const char* start= args_getpos (&in, &temp);
 		const char* lt= str_ltrim (start, end);
 		if (end - lt < TAG_MINSIZE)
 			return SXML_ERROR_BUFFERDRY;
@@ -445,7 +449,7 @@ sxmlerr_t sxml_parse(sxml_parser *parser, const char *xml, unsigned xmllen, sxml
 
 	//---
 
-	while (!state_rootcompleted (&temp))
+	while (!ROOT_PARSED (&temp))
 	{
 		const char* lt;
 		sxmlerr_t err= parse_characters (&temp, &in);
@@ -456,7 +460,7 @@ sxmlerr_t sxml_parse(sxml_parser *parser, const char *xml, unsigned xmllen, sxml
 
 		//---
 
-		lt= input_getstart (&in, &temp);
+		lt= args_getpos (&in, &temp);
 		assert (*lt == '<');		
 		if (end - lt < TAG_MINSIZE)
 			return SXML_ERROR_BUFFERDRY;
