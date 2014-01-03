@@ -31,19 +31,22 @@ static void print_tokenname (const sxmltok_t* token, const char* buffer)
 
 static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT ntokens, UINT* indentlevel)
 {
-	for (UINT i= 0; i < ntokens; i++)
+	UINT i;
+	for (i= 0; i < ntokens; i++)
 	{
 		const sxmltok_t* token= tokens + i;
 		switch (token->type)
 		{
 			case SXML_STARTTAG:
 			{
+				UINT j;
+
 				print_indent ((*indentlevel)++);
 				printf ("<");
 				print_tokenname (token, buffer);
 
 				//elem attributes are listed in the following tokens
-				for (UINT j= 0; j < token->size; j+= 2)
+				for (j= 0; j < token->size; j+= 2)
 				{
 					printf (" ");
 					print_tokenname (&token[j + 1], buffer);
@@ -86,8 +89,9 @@ static UINT count_lines (const char* buffer, UINT bufferlen)
 {
 	const char* end= buffer + bufferlen;
 	const char* it= buffer;
+	UINT i;
 
-	for (UINT i= 0; ; i++)
+	for (i= 0; ; i++)
 	{
 		it= (const char*) memchr (it, '\n', end - it);
 		if (it == NULL)
@@ -99,6 +103,7 @@ static UINT count_lines (const char* buffer, UINT bufferlen)
 
 
 //MARK: main
+//minimal example showing how you may use SXML with a fixed size input and output buffer
 
 #define MIN(a,b)	(((a) < (b)) ? (a) : (b))
 #define COUNT(arr)	(sizeof (arr) / sizeof ((arr)[0]))
@@ -106,14 +111,8 @@ static UINT count_lines (const char* buffer, UINT bufferlen)
 #define BUFFER_MAXLEN	1024
 
 
-
 int main (int argc, const char* argv[])
 {
-	//usage: sxml_test.exe arg.xml
-	assert (argc == 2);
-	const char* path= argv[1];
-
-	//example showing how you may use SXML with a fixed size input and output buffer
 	//input
 	char buffer[BUFFER_MAXLEN];
 	UINT bufferlen= 0;
@@ -124,10 +123,17 @@ int main (int argc, const char* argv[])
 	//used in example for pretty printing and error reporting
 	UINT indent= 0, lineno= 1;
 
+	const char* path;
+	FILE* file;
+
 	//parser object stores all data required for SXML to be reentrant
 	sxml_parser parser;
 	sxml_init (&parser);
-	FILE* file= fopen (path, "rb");
+
+	//usage: sxml_test.exe test.xml
+	assert (argc == 2);
+	path= argv[1];
+	file= fopen (path, "rb");
 	
 	for (;;)
 	{
@@ -155,6 +161,7 @@ int main (int argc, const char* argv[])
 			{
 				//parser expects more xml data to continue parsing
 				//we choose here to reuse the existing buffer array
+				size_t len;
 
 				//need to processs existing tokens before buffer is overwritten with new data
 				print_prettyxml (buffer, tokens, parser.ntokens, &indent);
@@ -169,7 +176,9 @@ int main (int argc, const char* argv[])
 				memmove (buffer, buffer + parser.bufferpos, bufferlen);
 
 				//fill remaining buffer with new data from file
-				bufferlen+= fread (buffer + bufferlen, 1, BUFFER_MAXLEN - bufferlen, file);
+				len= fread (buffer + bufferlen, 1, BUFFER_MAXLEN - bufferlen, file);
+				assert (0 < len);
+				bufferlen+= len;
 
 				parser.bufferpos= 0;
 				break;
@@ -177,12 +186,13 @@ int main (int argc, const char* argv[])
 
 			case SXML_ERROR_XMLINVALID:
 			{
+				char fmt[16];
+
 				//example of some simple error reporting
 				lineno+= count_lines (buffer, parser.bufferpos);
 				fprintf(stderr, "Error while parsing line %d:\n", lineno);
 
 				//print out contents of line containing the error
-				char fmt[16];
 				sprintf (fmt, "%%.%ds", MIN (bufferlen - parser.bufferpos, 72));
 				fprintf (stderr, fmt, buffer + parser.bufferpos);
 
