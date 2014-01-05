@@ -21,7 +21,7 @@ Usage
 -----
 The header file is heavily commented and should be the first place to look to get started.
 
-Check out the file sxml_test.c for an example of using SXML within a contrained environment with a fixed sized input and output buffer.
+Check out the file sxml_test.c for an example of using SXML within a constrained environment with a fixed sized input and output buffer.
 
 Limitations
 -----------

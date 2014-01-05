@@ -10,9 +10,9 @@ typedef int BOOL;
 #define TRUE	(!FALSE)
 
 /*
- MARK: string
- string functions work within the memory range specified (excluding end)
- returns end if value not found
+ MARK: String
+ String functions work within the memory range specified (excluding end).
+ Returns 'end' if value not found.
 */
 
 static const char* str_findchr (const char* start, const char* end, int c)
@@ -89,7 +89,7 @@ static const char* str_lspace (const char* start, const char* end)
 	return it;
 }
 
-/* left trim whitespace */
+/* Left trim whitespace */
 static const char* str_ltrim (const char* start, const char* end)
 {
 	const char* it;
@@ -101,7 +101,7 @@ static const char* str_ltrim (const char* start, const char* end)
 	return it;
 }
 
-/* right trim whitespace */
+/* Right trim whitespace */
 static const char* str_rtrim (const char* start, const char* end)
 {
 	const char* it, *prev;
@@ -117,9 +117,9 @@ static const char* str_rtrim (const char* start, const char* end)
 	return start;
 }
 
-/* MARK: state */
+/* MARK: State */
 
-/* collect arguments in a structure for convenience */
+/* Collect arguments in a structure for convenience */
 typedef struct
 {
 	const char* buffer;
@@ -173,12 +173,12 @@ static sxmlerr_t state_setpos (sxml_t* state, const sxml_args_t* args, const cha
 #define state_commit(dest,src) memcpy ((dest), (src), sizeof (sxml_t))
 
 /*
- MARK: parse
+ MARK: Parse
  
- SXML does minimal validation of the input data
- SXML_ERROR_XMLSTRICT is returned if some simple XML validation tests fail
- SXML_ERROR_XMLINVALID is instead returned if the invalid XML data is serious enough to prevent the parser from continuing
- we currently make no difference between these two - but they are marked diffently in case we wish to do so in the future
+ SXML does minimal validation of the input data.
+ SXML_ERROR_XMLSTRICT is returned if some simple XML validation tests fail.
+ SXML_ERROR_XMLINVALID is instead returned if the invalid XML data is serious enough to prevent the parser from continuing.
+ We currently make no difference between these two - but they are marked differently in case we wish to do so in the future.
 */
 
 #define SXML_ERROR_XMLSTRICT	SXML_ERROR_XMLINVALID
@@ -198,7 +198,7 @@ static sxmlerr_t parse_attributes (sxml_t* state, sxml_args_t* args, const char*
 	name= str_ltrim (start, end);
 	while (name != end)
 	{
-		/* attribute name */
+		/* Attribute name */
 		const char* eq, *space, *quot, *value;
 		if (!ISALPHA(*name))
 			return SXML_ERROR_XMLSTRICT;
@@ -211,7 +211,7 @@ static sxmlerr_t parse_attributes (sxml_t* state, sxml_args_t* args, const char*
 		if (!state_pushtoken (state, args, SXML_CDATA, name, space))
 			return SXML_ERROR_TOKENSFULL;
 
-		/* attribute value */
+		/* Attribute value */
 		quot= str_ltrim (eq + 1, end);
 		if (quot == end || !(*quot == '\'' || *quot == '"'))
 			return SXML_ERROR_XMLINVALID;
@@ -358,7 +358,7 @@ static sxmlerr_t parse_end (sxml_t* state, sxml_args_t* args)
 	if (gt == end)
 		return SXML_ERROR_BUFFERDRY;
 
-	/* test for no characters beyond elem name */
+	/* Test for no characters beyond elem name */
 	space= str_lspace (start, gt);
 	if (str_ltrim (space, gt) != gt)
 		return SXML_ERROR_XMLSTRICT;
@@ -406,8 +406,8 @@ static sxmlerr_t parse_characters (sxml_t* state, sxml_args_t* args)
 }
 
 /*
- MARK: sxml
- Public API inspired by the JSON parser jsmn ( http://zserge.com/jsmn.html )
+ MARK: SXML
+ Public API inspired by the JSON parser JSMN ( http://zserge.com/jsmn.html ).
 */
 
 void sxml_init (sxml_t *state)
