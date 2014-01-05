@@ -1,8 +1,9 @@
 #include "sxml.h"
 
-#include <string.h>
-#include <ctype.h>
-#include <assert.h>
+/* The following functions will need to be replaced if you want no dependency to libc: */
+#include <string.h>	/* memchr, memcmp, strlen, memcpy */
+#include <ctype.h>	/* isspace, isalpha */
+#include <assert.h>	/* assert */
 
 typedef unsigned UINT;
 typedef int BOOL;
