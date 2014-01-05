@@ -7,11 +7,10 @@
 
 typedef unsigned UINT;
 
-//---
-
-//MARK: pretty print xml
-//example of simple processing of token data
-
+/*
+ MARK: pretty print xml
+ example of simple processing of parsed token output
+*/
 static void print_indent (UINT indentlevel)
 {
 	if (0 < indentlevel)
@@ -45,7 +44,7 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 				printf ("<");
 				print_tokenname (token, buffer);
 
-				//elem attributes are listed in the following tokens
+				/* elem attributes are listed in the following tokens */
 				for (j= 0; j < token->size; j+= 2)
 				{
 					printf (" ");
@@ -66,9 +65,10 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 				puts (">");
 				break;
 
-			//other token types you might be interested in
+
+			/* other token types you might be interested in */
 			/*
-			case SXML_INSTRUCTION:
+			case SXML_INSTRUCTION
 			case SXML_DOCTYPE:
 			case SXML_COMMENT:
 			case SXML_CDATA:
@@ -79,12 +79,19 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 				break;
 		}
 
+		/*
+		 the following number of tokens contain additional data related to the current token
+		 (see SXML_STARTTAG case above as an example of how attributes are specified)
+		 skip them to get the next token to proccess
+		*/
 		i+= token->size;
 	}
 }
 
-//MARK: utility functions
-//useful for error reporting
+/*
+ MARK: utility functions
+ useful for error reporting
+*/
 static UINT count_lines (const char* buffer, UINT bufferlen)
 {
 	const char* end= buffer + bufferlen;
@@ -102,8 +109,10 @@ static UINT count_lines (const char* buffer, UINT bufferlen)
 }
 
 
-//MARK: main
-//minimal example showing how you may use SXML with a fixed size input and output buffer
+/*
+ MARK: main
+ minimal example showing how you may use SXML within a constrained environment with a fixed size input and output buffer
+*/
 
 #define MIN(a,b)	(((a) < (b)) ? (a) : (b))
 #define COUNT(arr)	(sizeof (arr) / sizeof ((arr)[0]))
@@ -113,27 +122,28 @@ static UINT count_lines (const char* buffer, UINT bufferlen)
 
 int main (int argc, const char* argv[])
 {
-	//input
+	/* input XML text */
 	char buffer[BUFFER_MAXLEN];
 	UINT bufferlen= 0;
 
-	//output
+	/* output token table */
 	sxmltok_t tokens[128];
 
-	//used in example for pretty printing and error reporting
+	/* used in example for pretty printing and error reporting */
 	UINT indent= 0, lineno= 1;
 
 	const char* path;
 	FILE* file;
 
-	//parser object stores all data required for SXML to be reentrant
-	sxml_parser parser;
+	/* parser object stores all data required for SXML to be reentrant */
+	sxml_t parser;
 	sxml_init (&parser);
 
-	//usage: sxml_test.exe test.xml
+	/* usage: sxml_test.exe test.xml */
 	assert (argc == 2);
 	path= argv[1];
 	file= fopen (path, "rb");
+	assert (file != NULL);
 	
 	for (;;)
 	{
@@ -145,41 +155,49 @@ int main (int argc, const char* argv[])
 		{
 			case SXML_ERROR_TOKENSFULL:
 			{
-				//need to give parser more space for tokens to continue parsing
-				//we choose here to reuse the existing token table once tokens have been processed
+				/*
+				 need to give parser more space for tokens to continue parsing
+				 we choose here to reuse the existing token table once tokens have been processed
 
-				//- example of some processing of the token data
-				//instead you might be interested in creating your own DOM structure
-				//or other processing of XML data useful for application
+				 example of some processing of the token data
+				 instead you might be interested in creating your own DOM structure
+				 or other processing of XML data useful for application
+				*/
 				print_prettyxml (buffer, tokens, parser.ntokens, &indent);
 
+				/* parser can now safely reuse all of the token table */
 				parser.ntokens= 0;
 				break;
 			}
 
 			case SXML_ERROR_BUFFERDRY:
 			{
-				//parser expects more xml data to continue parsing
-				//we choose here to reuse the existing buffer array
+				/* 
+				 parser expects more xml data to continue parsing
+				 we choose here to reuse the existing buffer array
+				*/
 				size_t len;
 
-				//need to processs existing tokens before buffer is overwritten with new data
+				/* need to processs existing tokens before buffer is overwritten with new data */
 				print_prettyxml (buffer, tokens, parser.ntokens, &indent);
 				parser.ntokens= 0;
 
-				//for error reporting
+				/* for error reporting */
 				lineno+= count_lines(buffer, parser.bufferpos);
 
-				//- example of how to reuse buffer array
-				//move unprocessed buffer content to start of array
+				/*
+				 example of how to reuse buffer array
+				 move unprocessed buffer content to start of array
+				*/
 				bufferlen-= parser.bufferpos;
 				memmove (buffer, buffer + parser.bufferpos, bufferlen);
 
-				//fill remaining buffer with new data from file
+				/* fill remaining buffer with new data from file */
 				len= fread (buffer + bufferlen, 1, BUFFER_MAXLEN - bufferlen, file);
 				assert (0 < len);
 				bufferlen+= len;
 
+				/* parser will now have to read from beginning of buffer to contiue */
 				parser.bufferpos= 0;
 				break;
 			}
@@ -188,11 +206,11 @@ int main (int argc, const char* argv[])
 			{
 				char fmt[16];
 
-				//example of some simple error reporting
+				/* example of some simple error reporting */
 				lineno+= count_lines (buffer, parser.bufferpos);
 				fprintf(stderr, "Error while parsing line %d:\n", lineno);
 
-				//print out contents of line containing the error
+				/* print out contents of line containing the error */
 				sprintf (fmt, "%%.%ds", MIN (bufferlen - parser.bufferpos, 72));
 				fprintf (stderr, fmt, buffer + parser.bufferpos);
 
@@ -208,7 +226,6 @@ int main (int argc, const char* argv[])
 
 	fclose (file);
 
-	//sucessfully parsed xml file
-	//flush remainig token output
+	/* sucessfully parsed xml file - flush remainig token output */
 	print_prettyxml (buffer, tokens, parser.ntokens, &indent);
 }
