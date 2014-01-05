@@ -173,7 +173,7 @@ int main (int argc, const char* argv[])
 			case SXML_ERROR_BUFFERDRY:
 			{
 				/* 
-				 Parser expects more xml data to continue parsing.
+				 Parser expects more XML data to continue parsing.
 				 We choose here to reuse the existing buffer array.
 				*/
 				size_t len;

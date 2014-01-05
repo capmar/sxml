@@ -94,7 +94,7 @@ struct sxmltok_t
 };
 
 /*
- Let's walk though how to correctly interpret a token of type SXML_STARTTAG.
+ Let's walk through how to correctly interpret a token of type SXML_STARTTAG.
  
  The element name can be extracted from the text buffer using 'startpos' and 'endpos'.
 

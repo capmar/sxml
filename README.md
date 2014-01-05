@@ -25,13 +25,13 @@ Check out the file sxml_test.c for an example of using SXML within a constrained
 
 Limitations
 -----------
-In order to remain lightweight the parser has the following limitations.
+In order to remain lightweight the parser has the following limitations:
 
 * Minimal XML validation during parsing
 * Limited support for multi-byte encodings beyond those that are [ascii extensions](http://en.wikipedia.org/wiki/Extended_ASCII#Multi-byte_character_encodings) (utf-8 is an ascii extension)
 * The greather-than character '>' will need to be escaped in attribute values for correct parsing
 
-Do contact me with suggestions if the limitations above are preventing you from using he parser
+Do contact me with suggestions if the limitations above are preventing you from using the parser.
 
 Alternatives
 ------------
