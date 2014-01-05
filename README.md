@@ -38,5 +38,6 @@ Alternatives
 List of alternative lightweight XML parsers considered before writing my own.
 
 * [ezXML](http://ezxml.sourceforge.net/)
-* [FastXML](http://codesuppository.blogspot.no/2009/02/fastxml*extremely-lightweight-stream.html)
+* [FastXML](http://codesuppository.blogspot.com/2009/02/fastxml-extremely-lightweight-stream.html)
 * [TinyXml](http://www.grinninglizard.com/tinyxml2/)
+* [RapidXML](http://rapidxml.sourceforge.net/)
