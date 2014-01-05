@@ -396,9 +396,6 @@ static sxmlerr_t parse_characters (sxml_t* state, sxml_args_t* args)
 	const char* end= buffer_getend (args);
 
 	const char* lt= str_findchr (start, end, '<');
-	if (lt == end)
-		return SXML_ERROR_BUFFERDRY;
-
 	if (lt != start)
 		state_pushtoken (state, args, SXML_CHARACTER, start, lt);
 
@@ -438,16 +435,16 @@ sxmlerr_t sxml_parse(sxml_t *state, const char *buffer, UINT bufferlen, sxmltok_
 		sxmlerr_t err;
 		const char* start= buffer_fromoffset (&args, temp.bufferpos);
 		const char* lt= str_ltrim (start, end);
-		if (end - lt < TAG_MINSIZE)
-			return SXML_ERROR_BUFFERDRY;
-
-		if (*lt != '<')
-			return SXML_ERROR_XMLINVALID;
-
 		state_setpos (&temp, &args, lt);
 		state_commit (state, &temp);
 
+		if (end - lt < TAG_MINSIZE)
+			return SXML_ERROR_BUFFERDRY;
+
 		/* --- */
+
+		if (*lt != '<')
+			return SXML_ERROR_XMLINVALID;
 
 		switch (lt[1])
 		{
@@ -476,10 +473,10 @@ sxmlerr_t sxml_parse(sxml_t *state, const char *buffer, UINT bufferlen, sxmltok_
 		/* --- */
 
 		lt= buffer_fromoffset (&args, temp.bufferpos);
-		assert (*lt == '<');		
 		if (end - lt < TAG_MINSIZE)
 			return SXML_ERROR_BUFFERDRY;
 
+		assert (*lt == '<');
 		switch (lt[1])
 		{
 		case '?':	err= parse_instruction (&temp, &args);		break;

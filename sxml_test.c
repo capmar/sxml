@@ -192,6 +192,13 @@ int main (int argc, const char* argv[])
 				bufferlen-= parser.bufferpos;
 				memmove (buffer, buffer + parser.bufferpos, bufferlen);
 
+				/* 
+				 If your buffer is smaller than the size required to complete a token the parser will endlessly call SXML_ERROR_BUFFERDRY.
+				 You will most likely encounter this problem if you have XML comments longer than BUFFER_MAXLEN in size.
+				 SXML_CHARACTER solves this problem by dividing the data over multiple tokens, but other token types remain affected.
+				*/
+				assert (bufferlen < BUFFER_MAXLEN);
+
 				/* Fill remaining buffer with new data from file */
 				len= fread (buffer + bufferlen, 1, BUFFER_MAXLEN - bufferlen, file);
 				assert (0 < len);
