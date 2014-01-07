@@ -68,7 +68,7 @@ typedef enum
 	SXML_STARTTAG,	/* Start tag describes the opening of an XML element */
 	SXML_ENDTAG,	/* End tag is the closing of an XML element */
 
-	SXML_CHARACTER,		/* Character data can be escaped - you might want to unescape the string for correct interpretation */
+	SXML_CHARACTER,		/* Character data may be escaped - check if the first character is an ampersand '&' to identity a XML character reference */
 	SXML_CDATA,			/* Character data should be read as is - it is not escaped */
 
 	/* And some other token types you might be interested in: */
@@ -96,13 +96,21 @@ struct sxmltok_t
 /*
  Let's walk through how to correctly interpret a token of type SXML_STARTTAG.
  
- The element name can be extracted from the text buffer using 'startpos' and 'endpos'.
+ <example zero='' one='Hello there!' three='Me, Myself &amp; I' />
+
+ The element name ('example') can be extracted from the text buffer using 'startpos' and 'endpos'.
 
  The attributes of the XML element are described in the following 'size' tokens.
- An attribute will be described using 2 tokens - first token will be the attribute name, the second will be the value.
- There is no specific type for attribute tokens. Instead the types SXML_CDATA and SXML_CHARACTER are used to hint that attribute values might need to be unescaped.
+ Each attribute is divided by a token of type SXML_CDATA - this is the attribute key.
+ There will be zero or more tokens of type SXML_CHARACTER following the key - together they describe one attribute value.
+ 
+ In our example you will get the following number of SXML_CHARACTER tokens after the attribute key:
+ * 'zero' will use no tokens to describe the empty attribute value.
+ * 'one' will have one token describing the attribute value ('Hello there!').
+ * 'three' will have three tokens describing the attribute value ('Me, Myself ')('&amp;')(' I')
 
- When processing the tokens do not forget about 'size' - for token types you want to skip remember to also skip the additional token data.
+ In our example the token of type SXML_STARTTAG will have a 'size' of 7 (3 SXML_CDATA and 4 SXML_CHARACTER).
+ When processing the tokens do not forget about 'size' - for any token you want to skip, also remember to skip the additional token data!
 */
 
 #ifdef __cplusplus
