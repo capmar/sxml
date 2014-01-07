@@ -163,11 +163,6 @@ static BOOL state_pushtoken (sxml_t* state, sxml_args_t* args, sxmltype_t type, 
 	return TRUE;
 }
 
-static UINT state_freetokens (const sxml_t* state, const sxml_args_t* args)
-{
-	return (state->ntokens <= args->num_tokens) ? (args->num_tokens - state->ntokens) : 0;
-}
-
 static sxmlerr_t state_setpos (sxml_t* state, const sxml_args_t* args, const char* ptr)
 {
 	state->bufferpos= buffer_tooffset (args, ptr);
