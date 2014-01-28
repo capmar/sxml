@@ -211,7 +211,7 @@ int main (int argc, const char* argv[])
 
 			case SXML_ERROR_XMLINVALID:
 			{
-				char fmt[16];
+				char fmt[8];
 
 				/* Example of some simple error reporting */
 				lineno+= count_lines (buffer, parser.bufferpos);
