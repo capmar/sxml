@@ -21,17 +21,53 @@ static void print_indent (UINT indentlevel)
 	}
 }
 
-static void print_tokenname (const sxmltok_t* token, const char* buffer)
+static void print_tokenvalue (const char* buffer, const sxmltok_t* token)
 {
 	char fmt[8];
 	sprintf (fmt, "%%.%ds", token->endpos - token->startpos);
 	printf (fmt, buffer + token->startpos);
 }
 
-static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT ntokens, UINT* indentlevel)
+static UINT print_chartokens (const char* buffer, const sxmltok_t tokens[], UINT num_tokens)
 {
 	UINT i;
-	for (i= 0; i < ntokens; i++)
+
+	for (i= 0; i < num_tokens; i++)
+	{
+		const char* ampr;
+
+		const sxmltok_t* token= tokens + i;
+		if (token->type != SXML_CHARACTER)
+			return i;
+
+		ampr= buffer + token->startpos;
+		assert (0 < token->endpos - token->startpos);
+
+		if (*ampr != '&')
+		{
+			print_tokenvalue (buffer, token);
+			continue;
+		}
+
+		switch (ampr[1])
+		{
+		case 'a':	printf ((ampr[2] == 'm') ? "&" : "'");	break;
+		case 'g':	printf (">");	break;
+		case 'l':	printf ("<");	break;
+		case 'q':	printf ("\"");	break;
+		default:
+			assert (0);
+			break;
+		}
+	}
+
+	return num_tokens;
+}
+
+static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT num_tokens, UINT* indentlevel)
+{
+	UINT i;
+	for (i= 0; i < num_tokens; i++)
 	{
 		const sxmltok_t* token= tokens + i;
 		switch (token->type)
@@ -42,15 +78,15 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 
 				print_indent ((*indentlevel)++);
 				printf ("<");
-				print_tokenname (token, buffer);
+				print_tokenvalue (buffer, token);
 
 				/* elem attributes are listed in the following tokens */
-				for (j= 0; j < token->size; j+= 2)
+				for (j= 0; j < token->size; j++)
 				{
 					printf (" ");
-					print_tokenname (&token[j + 1], buffer);
+					print_tokenvalue (buffer, &token[j + 1]);
 					printf ("='");
-					print_tokenname (&token[j + 2], buffer);
+					j+= print_chartokens (buffer, &token[j + 2], token->size - (j + 1));
 					printf ("'");
 				}
 
@@ -61,7 +97,7 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 			case SXML_ENDTAG:
 				print_indent (--(*indentlevel));
 				printf ("</");
-				print_tokenname (token, buffer);
+				print_tokenvalue (buffer, token);
 				puts (">");
 				break;
 
@@ -80,8 +116,7 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 		}
 
 		/*
-		 The following number of tokens contain additional data related to the current token.
-		 Skip them to get the next token to proccess.
+		 Tokens may contain additional data. Skip 'size' tokens to get the next token to proccess.
 		 (see SXML_STARTTAG case above as an example of how attributes are specified)
 		*/
 		i+= token->size;

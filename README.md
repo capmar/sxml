@@ -1,6 +1,6 @@
 SXML
 ====
-A Simple XML token parser written in C.
+A Small XML parser written in C.
 
 Inspired by the clean API design used by the [JSON parser JSMN](http://zserge.bitbucket.org/jsmn.html), SXML has the same design goal and features for XML parsing. Go read about JSMN's Philosophy and Features to get an idea of how it differs to other parsers - I'll wait right here.
 
@@ -28,8 +28,8 @@ Limitations
 In order to remain lightweight the parser has the following limitations:
 
 * Minimal XML validation during parsing
-* Limited support for multi-byte encodings beyond those that are [ascii extensions](http://en.wikipedia.org/wiki/Extended_ASCII#Multi-byte_character_encodings) (utf-8 is an ascii extension)
-* The greather-than character '>' will need to be escaped in attribute values for correct parsing
+* Input text must be ascii or an [ascii extension](http://en.wikipedia.org/wiki/Extended_ASCII) (latin-1 and utf-8 are examples of ascii extensions)
+* Element names are restricted to the ascii character set
 
 Do contact me with suggestions if the limitations above are preventing you from using the parser.
 
