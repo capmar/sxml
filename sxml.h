@@ -18,7 +18,7 @@ typedef enum
 {
 	SXML_ERROR_XMLINVALID= -1,	/* Parser found invalid XML data - not much you can do beyond error reporting */
 	SXML_SUCCESS= 0,			/* Parser has completed successfully - parsing of XML document is complete */
-	SXML_ERROR_BUFFERDRY= 1,	/* Parser ran out of buffer data - refill buffer with more XML text to continue parsing */
+	SXML_ERROR_BUFFERDRY= 1,	/* Parser ran out of input data - refill buffer with more XML text to continue parsing */
 	SXML_ERROR_TOKENSFULL= 2	/* Parser has filled all the supplied tokens with data - provide more tokens for further output */
 } sxmlerr_t;
 
@@ -80,7 +80,7 @@ typedef enum
 /*
  If you are familiar with the structure of an XML document most of these type names should sound familiar.
  
- A token also has the following information:
+ A token has the following data:
 */
 
 struct sxmltok_t
@@ -110,7 +110,7 @@ struct sxmltok_t
 #endif
 
 /*
- Congratulations on making it this far - now might be the time to check out sxml_test.c for an example of using SXML.
+ Congratulations on making it this far - now might be a good time to check out sxml_test.c for an example of using SXML.
 */
 
 #endif /* _SXML_H_INCLUDED */
