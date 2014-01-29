@@ -222,7 +222,7 @@ static sxmlerr_t parse_characters (sxml_t* state, sxml_args_t* args, const char*
 	if (ampr == end)
 		return state_setpos (state, args, ampr);
 
-	//limit entity to serach to ENTITY_MAXLEN
+	/* limit entity to search to ENTITY_MAXLEN */
 	limit= MIN (ampr + ENTITY_MAXLEN, end);
 	colon= str_findchr (ampr, limit, ';');
 	if (colon == limit)

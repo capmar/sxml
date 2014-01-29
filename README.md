@@ -11,7 +11,7 @@ Here is a list of features SXML shares with JSMN.
 * compatible with C89
 * no dependencies
 * highly portable
-* about 360 lines of code
+* about 420 lines of code
 * extremely small code footprint
 * API contains only 2 functions
 * no dynamic memory allocation
