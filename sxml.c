@@ -2,7 +2,6 @@
 
 /* The following functions will need to be replaced if you want no dependency to libc: */
 #include <string.h>	/* memchr, memcmp, strlen, memcpy */
-#include <ctype.h>	/* isspace, isalpha */
 #include <assert.h>	/* assert */
 
 typedef unsigned UINT;
@@ -64,21 +63,47 @@ static BOOL str_startswith (const char* start, const char* end, const char* pref
 	return memcmp (prefix, start, nbytes) == 0;
 }
 
-static BOOL str_endswith (const char* start, const char* end, const char* suffix)
+/* http://www.w3.org/TR/xml11/#sec-common-syn */
+
+static BOOL WhiteSpace (int c)
 {
-	long nbytes;
-	assert (start <= end);
-	
-	nbytes= strlen (suffix);
-	if (end - start < nbytes)
-		return FALSE;
-	
-	return memcmp (suffix, end - nbytes, nbytes) == 0;
+	switch (c)
+	{
+		case ' ':	/* 0x20 */
+		case '\t':	/* 0x9 */
+		case '\r':	/* 0xD */
+		case '\n':	/* 0xA */
+			return TRUE;
+	}
+
+	return FALSE;
 }
 
-#define ISSPACE(c)	(isspace(((unsigned char)(c))))
-#define ISALPHA(c)	(isalpha(((unsigned char)(c))))
-#define ISALNUM(c)	(isalnum(((unsigned char)(c))))
+static BOOL NameStartChar (int c)
+{
+	/*
+	 We don't perform utf-8 decoding - just accept all characters with hight bit set
+	 (0xC0 <= c && c <= 0xD6) || (0xD8 <= c && c <= 0xF6) || (0xF8 <= c && c <= 0x2FF) ||
+	 (0x370 <= c && c <= 0x37D) || (0x37F <= c && c <= 0x1FFF) || (0x200C <= c && c <= 0x200D) ||
+	 (0x2070 <= c && c <= 0x218F) || (0x2C00 <= c && c <= 0x2FEF) || (0x3001 <= c && c <= 0xD7FF) ||
+	 (0xF900 <= c && c <= 0xFDCF) || (0xFDF0 <= c && c <= 0xFFFD) || (0x10000 <= c && c <= 0xEFFFF);
+	 */
+	if (0x80 <= c)
+		return TRUE;
+
+	return c == ':' || ('A' <= c && c <= 'Z') || c == '_' || ('a' <= c && c <= 'z');
+}
+
+static BOOL NameChar (int c)
+{
+	return NameStartChar (c) ||
+		c == '-' || c == '.' || ('0'  <= c && c <= '9') ||
+		c == 0xB7 || (0x0300 <= c && c <= 0x036F) || (0x203F <= c && c <= 0x2040);
+}
+
+#define ISSPACE(c)	(WhiteSpace(((unsigned char)(c))))
+#define ISALPHA(c)	(NameStartChar(((unsigned char)(c))))
+#define ISALNUM(c)	(NameChar(((unsigned char)(c))))
 
 /* Left trim whitespace */
 static const char* str_ltrim (const char* start, const char* end)

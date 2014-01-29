@@ -27,9 +27,8 @@ Limitations
 -----------
 In order to remain lightweight the parser has the following limitations:
 
-* Minimal XML validation during parsing
+* Minimal XML syntax check during parsing
 * Input text must be ascii or an [ascii extension](http://en.wikipedia.org/wiki/Extended_ASCII) (latin-1 and utf-8 are examples of ascii extensions)
-* Element names are restricted to the ascii character set
 
 Do contact me with suggestions if the limitations above are preventing you from using the parser.
 
