@@ -162,10 +162,11 @@ typedef struct
 static BOOL state_pushtoken (sxml_t* state, sxml_args_t* args, sxmltype_t type, const char* start, const char* end)
 {
 	sxmltok_t* token;
-	UINT i= state->ntokens++;
-	if (args->num_tokens < state->ntokens)
+	UINT i;
+	if (args->num_tokens <= state->ntokens)
 		return FALSE;
-	
+
+	i = state->ntokens++;
 	token= &args->tokens[i];
 	token->type= type;
 	token->startpos= buffer_tooffset (args, start);
