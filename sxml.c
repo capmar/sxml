@@ -82,7 +82,7 @@ static BOOL WhiteSpace (int c)
 static BOOL NameStartChar (int c)
 {
 	/*
-	 We don't perform utf-8 decoding - just accept all characters with hight bit set
+	 We don't perform utf-8 decoding - just accept all characters with high bit set
 	 (0xC0 <= c && c <= 0xD6) || (0xD8 <= c && c <= 0xF6) || (0xF8 <= c && c <= 0x2FF) ||
 	 (0x370 <= c && c <= 0x37D) || (0x37F <= c && c <= 0x1FFF) || (0x200C <= c && c <= 0x200D) ||
 	 (0x2070 <= c && c <= 0x218F) || (0x2C00 <= c && c <= 0x2FEF) || (0x3001 <= c && c <= 0xD7FF) ||
