@@ -116,7 +116,7 @@ static void print_prettyxml (const char* buffer, const sxmltok_t tokens[], UINT 
 		}
 
 		/*
-		 Tokens may contain additional data. Skip 'size' tokens to get the next token to proccess.
+		 Tokens may contain additional data. Skip 'size' tokens to get the next token to process.
 		 (see SXML_STARTTAG case above as an example of how attributes are specified)
 		*/
 		i+= token->size;
@@ -213,7 +213,7 @@ int main (int argc, const char* argv[])
 				*/
 				size_t len;
 
-				/* Need to processs existing tokens before buffer is overwritten with new data */
+				/* Need to process existing tokens before buffer is overwritten with new data */
 				print_prettyxml (buffer, tokens, parser.ntokens, &indent);
 				parser.ntokens= 0;
 
@@ -239,7 +239,7 @@ int main (int argc, const char* argv[])
 				assert (0 < len);
 				bufferlen+= len;
 
-				/* Parser will now have to read from beginning of buffer to contiue */
+				/* Parser will now have to read from beginning of buffer to continue */
 				parser.bufferpos= 0;
 				break;
 			}
@@ -268,7 +268,7 @@ int main (int argc, const char* argv[])
 
 	fclose (file);
 
-	/* Sucessfully parsed XML file - flush remainig token output */
+	/* Successfully parsed XML file - flush remaining token output */
 	print_prettyxml (buffer, tokens, parser.ntokens, &indent);
 	return 0;
 }
